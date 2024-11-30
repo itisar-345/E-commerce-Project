@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <style>
+        .flex
+        {
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            position: fixed;
+            bottom: 0%;
+            top: 100%;
+            width: 100%;
+        }
+        .button
+        {
+            background-color: white;
+            color: rgb(255, 110, 150);
+            padding: 15px;
+            width: 52vh;
+            border-width: 3px;
+            border-color:  pink;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="flex">
+        <div>
+            <a href="home.php">
+                <button class="button">Home</button>
+            </a>
+        </div>
+
+        <div>
+            <a href="vieworders.php">
+                <button class="button">Orders</button>
+            </a>
+        </div>
+
+        <div>
+            <a href="viewcart.php">
+                <button class="button">Cart</button>
+            </a>
+        </div>
+
+        <div class="ml-auto">
+            <a href="../shared/logout.php">
+                <button class="button">Logout</button>
+            </a>
+        </div>
+    </div>
+</body>
+</html>
