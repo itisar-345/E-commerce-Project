@@ -21,6 +21,10 @@ public class Order {
     
     private BigDecimal price;
     
+    private Integer quantity;
+    
+    private String size;
+    
     @Column(name = "order_date")
     private LocalDateTime orderDate = LocalDateTime.now();
     
@@ -34,10 +38,12 @@ public class Order {
     // Constructors
     public Order() {}
     
-    public Order(User user, Product product, BigDecimal price) {
+    public Order(User user, Product product, BigDecimal price, Integer quantity, String size) {
         this.user = user;
         this.product = product;
         this.price = price;
+        this.quantity = quantity;
+        this.size = size;
     }
     
     // Getters and Setters
@@ -58,4 +64,10 @@ public class Order {
     
     public OrderStatus getStatus() { return status; }
     public void setStatus(OrderStatus status) { this.status = status; }
+    
+    public Integer getQuantity() { return quantity; }
+    public void setQuantity(Integer quantity) { this.quantity = quantity; }
+    
+    public String getSize() { return size; }
+    public void setSize(String size) { this.size = size; }
 }

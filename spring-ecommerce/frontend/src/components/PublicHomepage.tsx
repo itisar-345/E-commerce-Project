@@ -1,12 +1,31 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Sparkles, Heart, Star, ShoppingBag } from 'lucide-react';
 import PublicProductList from './PublicProductList';
+import ProductDetails from './ProductDetails';
 
 interface PublicHomepageProps {
+  searchQuery?: string;
   onLoginRequired: () => void;
+  onViewDetails?: () => void;
+  onBackFromDetails?: () => void;
 }
 
-const PublicHomepage: React.FC<PublicHomepageProps> = ({ onLoginRequired }) => {
+const PublicHomepage: React.FC<PublicHomepageProps> = ({ searchQuery = '', onLoginRequired, onViewDetails, onBackFromDetails }) => {
+  const [selectedProductId, setSelectedProductId] = useState<number | null>(null);
+  
+  const handleViewProduct = (productId: number) => {
+    setSelectedProductId(productId);
+    onViewDetails?.();
+  };
+  
+  const handleBack = () => {
+    setSelectedProductId(null);
+    onBackFromDetails?.();
+  };
+  
+  if (selectedProductId) {
+    return <ProductDetails productId={selectedProductId} onBack={handleBack} isPublic={true} onLoginRequired={onLoginRequired} />;
+  }
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 to-orange-50">
       {/* Hero Section */}
@@ -71,7 +90,7 @@ const PublicHomepage: React.FC<PublicHomepageProps> = ({ onLoginRequired }) => {
             Login to add items to your cart and place orders.
           </p>
         </div>
-        <PublicProductList onLoginRequired={onLoginRequired} />
+        <PublicProductList searchQuery={searchQuery} onLoginRequired={onLoginRequired} onViewProduct={handleViewProduct} />
       </div>
     </div>
   );

@@ -22,6 +22,8 @@ public class Cart {
     
     private Integer quantity = 1;
     
+    private String size;
+    
     // Constructors
     public Cart() {}
     
@@ -46,4 +48,7 @@ public class Cart {
     
     public Integer getQuantity() { return quantity; }
     public void setQuantity(Integer quantity) { this.quantity = quantity; }
+    
+    public String getSize() { return size; }
+    public void setSize(String size) { this.size = size; }
 }

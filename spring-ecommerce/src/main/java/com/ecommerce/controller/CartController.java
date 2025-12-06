@@ -42,25 +42,30 @@ public class CartController {
     @PostMapping("/add/{productId}")
     public ResponseEntity<ApiResponse<Cart>> addToCart(
             @PathVariable Long productId,
+            @RequestParam(required = false, defaultValue = "1") Integer quantity,
+            @RequestParam(required = false) String size,
             @RequestHeader("Authorization") String token) {
         try {
-            System.out.println("Add to cart request - Product ID: " + productId);
-            System.out.println("Token received: " + token);
-            
             String email = jwtService.extractEmail(token.substring(7));
-            System.out.println("Extracted email: " + email);
-            
             User user = userRepository.findByEmail(email)
                     .orElseThrow(() -> new RuntimeException("User not found"));
             
-            System.out.println("User found: " + user.getUsername());
-            Cart cartItem = cartService.addToCart(user, productId);
-            System.out.println("Cart item created successfully");
-            
+            Cart cartItem = cartService.addToCart(user, productId, quantity, size);
             return ResponseEntity.ok(ApiResponse.success("Product added to cart", cartItem));
         } catch (Exception e) {
-            System.err.println("Error adding to cart: " + e.getMessage());
-            e.printStackTrace();
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
+        }
+    }
+    
+    @PutMapping("/{cartId}")
+    public ResponseEntity<ApiResponse<Cart>> updateCart(
+            @PathVariable Long cartId,
+            @RequestParam(required = false) Integer quantity,
+            @RequestParam(required = false) String size) {
+        try {
+            Cart cartItem = cartService.updateCart(cartId, quantity, size);
+            return ResponseEntity.ok(ApiResponse.success("Cart updated successfully", cartItem));
+        } catch (Exception e) {
             return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
         }
     }

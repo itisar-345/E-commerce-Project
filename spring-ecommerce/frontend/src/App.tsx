@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ShoppingBag, User, LogIn, LogOut, Package, ShoppingCart, BarChart3, Heart } from 'lucide-react';
+import { ShoppingBag, User, LogIn, LogOut, Package, ShoppingCart, BarChart3, Heart, Search } from 'lucide-react';
 import Login from './components/Login';
 import Register from './components/Register';
 import Cart from './components/Cart';
@@ -15,6 +15,8 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userType, setUserType] = useState<'CUSTOMER' | 'VENDOR' | null>(null);
   const [currentView, setCurrentView] = useState<'home' | 'login' | 'register' | 'dashboard' | 'cart' | 'orders' | 'wishlist'>('home');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showHeader, setShowHeader] = useState(true);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -72,6 +74,24 @@ function App() {
                 </span>
               </div>
             </div>
+            
+            {/* Search Bar */}
+            {((isAuthenticated && userType === 'CUSTOMER' && currentView === 'dashboard') || 
+             (isAuthenticated && userType === 'VENDOR' && currentView === 'dashboard') ||
+             (!isAuthenticated && currentView === 'home')) && (
+              <div className="flex-1 max-w-xl mx-8">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <input
+                    type="text"
+                    placeholder="Search for products..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                  />
+                </div>
+              </div>
+            )}
             
             <div className="flex items-center space-x-2">
               {isAuthenticated ? (
@@ -187,7 +207,7 @@ function App() {
             />
           );
         default:
-          return <PublicHomepage onLoginRequired={handleLoginRequired} />;
+          return <PublicHomepage searchQuery={searchQuery} onLoginRequired={handleLoginRequired} onViewDetails={() => setShowHeader(false)} onBackFromDetails={() => setShowHeader(true)} />;
       }
     }
 
@@ -205,7 +225,7 @@ function App() {
             />
           );
         default:
-          return <CustomerDashboard />;
+          return <CustomerDashboard searchQuery={searchQuery} onViewDetails={() => setShowHeader(false)} onBackFromDetails={() => setShowHeader(true)} />;
       }
     }
 
@@ -214,7 +234,7 @@ function App() {
         case 'orders':
           return <VendorOrders />;
         default:
-          return <VendorDashboard />;
+          return <VendorDashboard searchQuery={searchQuery} onViewDetails={() => setShowHeader(false)} onBackFromDetails={() => setShowHeader(true)} />;
       }
     }
 
@@ -227,7 +247,7 @@ function App() {
 
   return (
     <div className="min-h-screen bg-background">
-      {renderNavigation()}
+      {showHeader && renderNavigation()}
       <main className="animate-fade-in">
         {renderContent()}
       </main>

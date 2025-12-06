@@ -3,8 +3,8 @@ import { Heart, ShoppingCart, Trash2, ArrowLeft, Loader2, Eye, Star } from 'luci
 import { Button } from './ui/button';
 import { Card, CardContent } from './ui/card';
 import ProductDetails from './ProductDetails';
-import api from '../services/api';
-import type { Product } from '../types/index';
+import api, { wishlistAPI } from '../services/api';
+import type { Product, Wishlist } from '../types/index';
 
 interface WishlistProps {
   onBack: () => void;
@@ -12,7 +12,7 @@ interface WishlistProps {
 }
 
 const Wishlist: React.FC<WishlistProps> = ({ onBack, onViewProduct }) => {
-  const [wishlistItems, setWishlistItems] = useState<Product[]>([]);
+  const [wishlistItems, setWishlistItems] = useState<Wishlist[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedProductId, setSelectedProductId] = useState<number | null>(null);
   const [addingToCart, setAddingToCart] = useState<number | null>(null);
@@ -25,10 +25,9 @@ const Wishlist: React.FC<WishlistProps> = ({ onBack, onViewProduct }) => {
 
   const loadWishlist = async () => {
     try {
-      // For now, using localStorage to store wishlist
-      const savedWishlist = localStorage.getItem('wishlist');
-      if (savedWishlist) {
-        setWishlistItems(JSON.parse(savedWishlist));
+      const response = await wishlistAPI.getAll();
+      if (response.success && response.data) {
+        setWishlistItems(response.data);
       }
     } catch (err) {
       console.error('Failed to load wishlist');
@@ -37,19 +36,18 @@ const Wishlist: React.FC<WishlistProps> = ({ onBack, onViewProduct }) => {
     }
   };
 
-  const removeFromWishlist = (productId: number) => {
-    const savedWishlist = localStorage.getItem('wishlist');
-    if (savedWishlist) {
-      const currentWishlist = JSON.parse(savedWishlist);
-      const updatedWishlist = currentWishlist.filter((item: Product) => item.pid !== productId);
-      setWishlistItems(updatedWishlist);
-      localStorage.setItem('wishlist', JSON.stringify(updatedWishlist));
+  const removeFromWishlist = async (productId: number) => {
+    try {
+      await wishlistAPI.remove(productId);
+      setWishlistItems(prev => prev.filter(item => item.product.pid !== productId));
       
       const successDiv = document.createElement('div');
       successDiv.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-md shadow-lg z-50';
       successDiv.textContent = 'Removed from wishlist!';
       document.body.appendChild(successDiv);
       setTimeout(() => document.body.removeChild(successDiv), 2000);
+    } catch (err) {
+      console.error('Failed to remove from wishlist');
     }
   };
 
@@ -164,7 +162,9 @@ const Wishlist: React.FC<WishlistProps> = ({ onBack, onViewProduct }) => {
           </Card>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {wishlistItems.map((product) => (
+            {wishlistItems.map((item) => {
+              const product = item.product;
+              return (
               <Card key={product.pid} className={`group hover:shadow-xl transition-all duration-300 overflow-hidden border-0 bg-white/80 backdrop-blur-sm ${editMode && selectedForDelete.includes(product.pid) ? 'ring-2 ring-red-500' : ''}`}>
                 <div className="relative overflow-hidden">
                   <img 
@@ -245,9 +245,11 @@ const Wishlist: React.FC<WishlistProps> = ({ onBack, onViewProduct }) => {
                   </div>
                 </CardContent>
               </Card>
-            ))}
+            );
+            })}
           </div>
-        )}
+        )
+        }
       </div>
     </div>
   );

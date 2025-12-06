@@ -7,7 +7,12 @@ import com.ecommerce.repository.UserRepository;
 import com.ecommerce.service.JwtService;
 import com.ecommerce.service.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import java.math.BigDecimal;
@@ -28,11 +33,14 @@ public class ProductController {
     private UserRepository userRepository;
     
     @GetMapping
-    public ResponseEntity<ApiResponse<List<Product>>> getAllProducts() {
+    public ResponseEntity<ApiResponse<?>> getAllProducts(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "pid") String sortBy) {
         try {
-            List<Product> products = productService.getAllProducts();
-            System.out.println("Found " + products.size() + " products");
-            return ResponseEntity.ok(ApiResponse.success("Products retrieved successfully", products));
+            Pageable pageable = PageRequest.of(page, size, Sort.by(sortBy));
+            Page<Product> productPage = productService.getAllProducts(pageable);
+            return ResponseEntity.ok(ApiResponse.success("Products retrieved successfully", productPage));
         } catch (Exception e) {
             System.err.println("Error fetching products: " + e.getMessage());
             e.printStackTrace();
@@ -51,6 +59,7 @@ public class ProductController {
     }
     
     @PostMapping
+    @PreAuthorize("hasRole('VENDOR')")
     public ResponseEntity<ApiResponse<Product>> createProduct(
             @RequestParam String name,
             @RequestParam BigDecimal price,
@@ -75,6 +84,7 @@ public class ProductController {
     }
     
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('VENDOR')")
     public ResponseEntity<ApiResponse<Product>> updateProduct(
             @PathVariable Long id,
             @RequestParam String name,
@@ -113,6 +123,7 @@ public class ProductController {
     }
     
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('VENDOR')")
     public ResponseEntity<ApiResponse<String>> deleteProduct(@PathVariable Long id) {
         try {
             productService.deleteProduct(id);

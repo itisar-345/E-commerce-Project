@@ -33,10 +33,10 @@ CREATE TABLE IF NOT EXISTS cart (
     pid BIGINT NOT NULL,
     price DECIMAL(10,2) NOT NULL,
     quantity INT DEFAULT 1,
+    size VARCHAR(10),
     added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (userid) REFERENCES user(userid) ON DELETE CASCADE,
-    FOREIGN KEY (pid) REFERENCES product(pid) ON DELETE CASCADE,
-    UNIQUE KEY unique_user_product (userid, pid)
+    FOREIGN KEY (pid) REFERENCES product(pid) ON DELETE CASCADE
 );
 
 -- Orders table
@@ -45,10 +45,23 @@ CREATE TABLE IF NOT EXISTS orders (
     userid BIGINT NOT NULL,
     pid BIGINT NOT NULL,
     price DECIMAL(10,2) NOT NULL,
+    quantity INT DEFAULT 1,
+    size VARCHAR(10),
     order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     status ENUM('PENDING', 'DELIVERED', 'CANCELLED') DEFAULT 'PENDING',
     FOREIGN KEY (userid) REFERENCES user(userid) ON DELETE CASCADE,
     FOREIGN KEY (pid) REFERENCES product(pid) ON DELETE CASCADE
+);
+
+-- Wishlist table
+CREATE TABLE IF NOT EXISTS wishlist (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    userid BIGINT NOT NULL,
+    pid BIGINT NOT NULL,
+    added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (userid) REFERENCES user(userid) ON DELETE CASCADE,
+    FOREIGN KEY (pid) REFERENCES product(pid) ON DELETE CASCADE,
+    UNIQUE KEY unique_user_product (userid, pid)
 );
 
 -- Insert sample data

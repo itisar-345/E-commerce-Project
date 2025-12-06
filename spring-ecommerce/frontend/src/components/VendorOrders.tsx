@@ -238,6 +238,17 @@ const VendorOrders: React.FC = () => {
                             <DollarSign className="h-4 w-4" />
                             <span>₹{order.price}</span>
                           </div>
+                          {order.quantity && (
+                            <div className="flex items-center space-x-1">
+                              <Package className="h-4 w-4" />
+                              <span>Qty: {order.quantity}</span>
+                            </div>
+                          )}
+                          {order.size && (
+                            <div className="flex items-center space-x-1">
+                              <span className="font-medium">Size: {order.size}</span>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>

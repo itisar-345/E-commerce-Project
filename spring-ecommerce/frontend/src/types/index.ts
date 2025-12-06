@@ -20,6 +20,7 @@ export interface Cart {
   product: Product;
   price: number;
   quantity: number;
+  size?: string;
 }
 
 export interface Order {
@@ -27,8 +28,17 @@ export interface Order {
   user: User;
   product: Product;
   price: number;
+  quantity: number;
+  size?: string;
   orderDate: string;
   status: 'PENDING' | 'DELIVERED' | 'CANCELLED';
+}
+
+export interface Wishlist {
+  id: number;
+  user: User;
+  product: Product;
+  addedAt: string;
 }
 
 export interface ApiResponse<T> {

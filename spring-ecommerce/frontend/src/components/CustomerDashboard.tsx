@@ -1,8 +1,30 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Heart } from 'lucide-react';
 import ProductList from './ProductList';
+import ProductDetails from './ProductDetails';
 
-const CustomerDashboard: React.FC = () => {
+interface CustomerDashboardProps {
+  searchQuery?: string;
+  onViewDetails?: () => void;
+  onBackFromDetails?: () => void;
+}
+
+const CustomerDashboard: React.FC<CustomerDashboardProps> = ({ searchQuery = '', onViewDetails, onBackFromDetails }) => {
+  const [selectedProductId, setSelectedProductId] = useState<number | null>(null);
+  
+  const handleViewProduct = (productId: number) => {
+    setSelectedProductId(productId);
+    onViewDetails?.();
+  };
+  
+  const handleBack = () => {
+    setSelectedProductId(null);
+    onBackFromDetails?.();
+  };
+  
+  if (selectedProductId) {
+    return <ProductDetails productId={selectedProductId} onBack={handleBack} />;
+  }
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 to-orange-50">
       {/* Welcome Section */}
@@ -35,7 +57,7 @@ const CustomerDashboard: React.FC = () => {
             Add your favorite items to cart and enjoy seamless shopping experience.
           </p>
         </div>
-        <ProductList />
+        <ProductList searchQuery={searchQuery} onViewProduct={handleViewProduct} />
       </div>
     </div>
   );

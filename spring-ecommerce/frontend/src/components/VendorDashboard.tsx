@@ -1,17 +1,26 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Package, TrendingUp, DollarSign, X, Upload, Trash2, Store } from 'lucide-react';
+import { Plus, Package, TrendingUp, DollarSign, X, Upload, Trash2, Store, Search, Edit2 } from 'lucide-react';
 import { productAPI } from '../services/api';
 import api from '../services/api';
 import type { Product } from '../types/index';
+import ProductDetails from './ProductDetails';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Input } from './ui/input';
 
-const VendorDashboard: React.FC = () => {
+interface VendorDashboardProps {
+  searchQuery?: string;
+  onViewDetails?: () => void;
+  onBackFromDetails?: () => void;
+}
+
+const VendorDashboard: React.FC<VendorDashboardProps> = ({ searchQuery = '', onViewDetails, onBackFromDetails }) => {
   const [products, setProducts] = useState<Product[]>([]);
+  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
   const [showUploadForm, setShowUploadForm] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [selectedProductId, setSelectedProductId] = useState<number | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     price: '',
@@ -23,6 +32,18 @@ const VendorDashboard: React.FC = () => {
     loadVendorProducts();
     loadVendorOrders();
   }, []);
+  
+  useEffect(() => {
+    if (searchQuery.trim() === '') {
+      setFilteredProducts(products);
+    } else {
+      const filtered = products.filter(product => 
+        product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        product.detail.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+      setFilteredProducts(filtered);
+    }
+  }, [searchQuery, products]);
 
   const loadVendorProducts = async () => {
     try {
@@ -83,6 +104,27 @@ const VendorDashboard: React.FC = () => {
     }
   };
 
+  const handleViewProduct = (productId: number) => {
+    setSelectedProductId(productId);
+    onViewDetails?.();
+  };
+  
+  const handleBack = () => {
+    setSelectedProductId(null);
+    onBackFromDetails?.();
+  };
+  
+  if (selectedProductId) {
+    return (
+      <ProductDetails 
+        productId={selectedProductId} 
+        onBack={handleBack}
+        isVendor={true}
+        onProductDeleted={loadVendorProducts}
+      />
+    );
+  }
+  
   const renderUploadForm = () => (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <Card className="w-full max-w-md max-h-[90vh] overflow-y-auto">
@@ -174,29 +216,29 @@ const VendorDashboard: React.FC = () => {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
           <Card>
-            <CardContent className="p-6">
+            <CardContent className="p-4 sm:p-6">
               <div className="flex items-center space-x-3">
                 <div className="p-2 bg-pink-100 rounded-full">
                   <Package className="h-6 w-6 text-pink-600" />
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Total Products</p>
-                  <p className="text-2xl font-bold text-foreground">{products.length}</p>
+                  <p className="text-xl sm:text-2xl font-bold text-foreground">{products.length}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-6">
+            <CardContent className="p-4 sm:p-6">
               <div className="flex items-center space-x-3">
                 <div className="p-2 bg-orange-100 rounded-full">
                   <TrendingUp className="h-6 w-6 text-orange-600" />
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Pending Orders</p>
-                  <p className="text-2xl font-bold text-foreground">
+                  <p className="text-xl sm:text-2xl font-bold text-foreground">
                     {orders.filter(order => order.status === 'PENDING').length}
                   </p>
                 </div>
@@ -204,14 +246,14 @@ const VendorDashboard: React.FC = () => {
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-6">
+            <CardContent className="p-4 sm:p-6">
               <div className="flex items-center space-x-3">
                 <div className="p-2 bg-purple-100 rounded-full">
                   <DollarSign className="h-6 w-6 text-purple-600" />
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Total Revenue</p>
-                  <p className="text-2xl font-bold text-foreground">
+                  <p className="text-xl sm:text-2xl font-bold text-foreground">
                     ₹{orders.filter(order => order.status === 'DELIVERED').reduce((sum, order) => sum + order.price, 0)}
                   </p>
                 </div>
@@ -222,12 +264,12 @@ const VendorDashboard: React.FC = () => {
 
         {/* Products Section */}
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0">
+          <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-2 sm:space-y-0">
             <CardTitle className="flex items-center space-x-2">
               <Package className="h-5 w-5" />
               <span>My Products</span>
             </CardTitle>
-            <Button onClick={() => setShowUploadForm(true)} className="flex items-center space-x-2">
+            <Button onClick={() => setShowUploadForm(true)} className="flex items-center space-x-2 w-full sm:w-auto">
               <Plus className="h-4 w-4" />
               <span>Add Product</span>
             </Button>
@@ -243,11 +285,17 @@ const VendorDashboard: React.FC = () => {
                   <span>Add Your First Product</span>
                 </Button>
               </div>
+            ) : filteredProducts.length === 0 && searchQuery.trim() !== '' ? (
+              <div className="text-center py-12">
+                <Search className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-foreground mb-2">No products found</h3>
+                <p className="text-muted-foreground">Try searching with different keywords</p>
+              </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {products.map((product) => (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+                {filteredProducts.map((product) => (
                   <Card key={product.pid} className="overflow-hidden hover:shadow-lg transition-shadow">
-                    <div className="aspect-square overflow-hidden">
+                    <div className="aspect-square overflow-hidden cursor-pointer" onClick={() => handleViewProduct(product.pid)}>
                       <img 
                         src={`http://localhost:8080${product.imgpath}`} 
                         alt={product.name}
@@ -258,15 +306,26 @@ const VendorDashboard: React.FC = () => {
                       <h3 className="font-semibold text-foreground mb-1 line-clamp-1">{product.name}</h3>
                       <p className="text-lg font-bold text-primary mb-2">₹{product.price}</p>
                       <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{product.detail}</p>
-                      <Button 
-                        variant="destructive" 
-                        size="sm" 
-                        onClick={() => handleDelete(product.pid)}
-                        className="w-full flex items-center space-x-2"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                        <span>Delete</span>
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => handleViewProduct(product.pid)}
+                          className="flex-1 flex items-center space-x-2"
+                        >
+                          <Edit2 className="h-4 w-4" />
+                          <span>Edit</span>
+                        </Button>
+                        <Button 
+                          variant="destructive" 
+                          size="sm" 
+                          onClick={() => handleDelete(product.pid)}
+                          className="flex-1 flex items-center space-x-2"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          <span>Delete</span>
+                        </Button>
+                      </div>
                     </CardContent>
                   </Card>
                 ))}

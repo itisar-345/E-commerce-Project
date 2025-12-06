@@ -1,17 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { ShoppingCart, Eye, Star, Loader2, Heart } from 'lucide-react';
-import { productAPI } from '../services/api';
+import { ShoppingCart, Eye, Star, Loader2, Heart, Search } from 'lucide-react';
+import { productAPI, wishlistAPI } from '../services/api';
 import type { Product } from '../types/index';
 import api from '../services/api';
-import ProductDetails from './ProductDetails';
 import { Button } from './ui/button';
 import { Card, CardContent } from './ui/card';
 
-const ProductList: React.FC = () => {
+interface ProductListProps {
+  searchQuery?: string;
+  onViewProduct?: (productId: number) => void;
+}
+
+const ProductList: React.FC<ProductListProps> = ({ searchQuery = '', onViewProduct }) => {
   const [products, setProducts] = useState<Product[]>([]);
+  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [selectedProductId, setSelectedProductId] = useState<number | null>(null);
   const [addingToCart, setAddingToCart] = useState<number | null>(null);
   const [wishlistItems, setWishlistItems] = useState<number[]>([]);
 
@@ -19,12 +23,27 @@ const ProductList: React.FC = () => {
     loadProducts();
     loadWishlist();
   }, []);
+  
+  useEffect(() => {
+    if (searchQuery.trim() === '') {
+      setFilteredProducts(products);
+    } else {
+      const filtered = products.filter(product => 
+        product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        product.detail.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+      setFilteredProducts(filtered);
+    }
+  }, [searchQuery, products]);
 
-  const loadWishlist = () => {
-    const savedWishlist = localStorage.getItem('wishlist');
-    if (savedWishlist) {
-      const wishlist = JSON.parse(savedWishlist);
-      setWishlistItems(wishlist.map((item: Product) => item.pid));
+  const loadWishlist = async () => {
+    try {
+      const response = await wishlistAPI.getAll();
+      if (response.success && response.data) {
+        setWishlistItems(response.data.map(item => item.product.pid));
+      }
+    } catch (err) {
+      console.error('Failed to load wishlist');
     }
   };
 
@@ -32,7 +51,8 @@ const ProductList: React.FC = () => {
     try {
       const response = await productAPI.getAll();
       if (response.success && response.data) {
-        setProducts(response.data);
+        const productData = response.data.content || response.data;
+        setProducts(Array.isArray(productData) ? productData : []);
       }
     } catch (err: any) {
       setError('Failed to load products');
@@ -41,18 +61,20 @@ const ProductList: React.FC = () => {
     }
   };
 
-  const addToCart = async (productId: number) => {
+  const addToCart = async (productId: number, quantity: number = 1, size?: string) => {
     setAddingToCart(productId);
     try {
-      await api.post(`/cart/add/${productId}`);
-      // Show success message
+      const params = new URLSearchParams();
+      params.append('quantity', quantity.toString());
+      if (size) params.append('size', size);
+      
+      await api.post(`/cart/add/${productId}?${params.toString()}`);
       const successDiv = document.createElement('div');
       successDiv.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-md shadow-lg z-50';
       successDiv.textContent = 'Product added to cart!';
       document.body.appendChild(successDiv);
       setTimeout(() => document.body.removeChild(successDiv), 3000);
     } catch (err) {
-      // Show error message
       const errorDiv = document.createElement('div');
       errorDiv.className = 'fixed top-4 right-4 bg-red-500 text-white px-4 py-2 rounded-md shadow-lg z-50';
       errorDiv.textContent = 'Failed to add to cart. Please login first.';
@@ -63,42 +85,33 @@ const ProductList: React.FC = () => {
     }
   };
 
-  const toggleWishlist = (product: Product) => {
-    const savedWishlist = localStorage.getItem('wishlist');
-    let wishlist = savedWishlist ? JSON.parse(savedWishlist) : [];
+  const toggleWishlist = async (product: Product) => {
     const isWishlisted = wishlistItems.includes(product.pid);
     
-    if (isWishlisted) {
-      wishlist = wishlist.filter((item: Product) => item.pid !== product.pid);
-      setWishlistItems(prev => prev.filter(id => id !== product.pid));
-      
-      const successDiv = document.createElement('div');
-      successDiv.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-md shadow-lg z-50';
-      successDiv.textContent = 'Removed from wishlist!';
-      document.body.appendChild(successDiv);
-      setTimeout(() => document.body.removeChild(successDiv), 2000);
-    } else {
-      wishlist.push(product);
-      setWishlistItems(prev => [...prev, product.pid]);
-      
-      const successDiv = document.createElement('div');
-      successDiv.className = 'fixed top-4 right-4 bg-pink-500 text-white px-6 py-3 rounded-md shadow-lg z-50';
-      successDiv.textContent = 'Added to wishlist!';
-      document.body.appendChild(successDiv);
-      setTimeout(() => document.body.removeChild(successDiv), 2000);
+    try {
+      if (isWishlisted) {
+        await wishlistAPI.remove(product.pid);
+        setWishlistItems(prev => prev.filter(id => id !== product.pid));
+        
+        const successDiv = document.createElement('div');
+        successDiv.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-md shadow-lg z-50';
+        successDiv.textContent = 'Removed from wishlist!';
+        document.body.appendChild(successDiv);
+        setTimeout(() => document.body.removeChild(successDiv), 2000);
+      } else {
+        await wishlistAPI.add(product.pid);
+        setWishlistItems(prev => [...prev, product.pid]);
+        
+        const successDiv = document.createElement('div');
+        successDiv.className = 'fixed top-4 right-4 bg-pink-500 text-white px-6 py-3 rounded-md shadow-lg z-50';
+        successDiv.textContent = 'Added to wishlist!';
+        document.body.appendChild(successDiv);
+        setTimeout(() => document.body.removeChild(successDiv), 2000);
+      }
+    } catch (err) {
+      console.error('Wishlist operation failed:', err);
     }
-    
-    localStorage.setItem('wishlist', JSON.stringify(wishlist));
   };
-
-  if (selectedProductId) {
-    return (
-      <ProductDetails 
-        productId={selectedProductId} 
-        onBack={() => setSelectedProductId(null)} 
-      />
-    );
-  }
 
   if (loading) {
     return (
@@ -121,6 +134,18 @@ const ProductList: React.FC = () => {
     );
   }
 
+  if (filteredProducts.length === 0 && searchQuery.trim() !== '') {
+    return (
+      <div className="text-center py-12">
+        <div className="max-w-md mx-auto">
+          <Search className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-foreground mb-2">No products found</h3>
+          <p className="text-muted-foreground">Try searching with different keywords</p>
+        </div>
+      </div>
+    );
+  }
+
   if (products.length === 0) {
     return (
       <div className="text-center py-12">
@@ -134,21 +159,23 @@ const ProductList: React.FC = () => {
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-      {products.map((product) => (
-        <Card key={product.pid} className="group hover:shadow-xl transition-all duration-300 overflow-hidden border-0 bg-white/80 backdrop-blur-sm">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 px-4 sm:px-0">
+      {filteredProducts.map((product) => (
+        <Card key={product.pid} className="group hover:shadow-xl transition-all duration-300 overflow-hidden border-0 bg-white/80 backdrop-blur-sm cursor-pointer" onClick={() => onViewProduct?.(product.pid)}>
           <div className="relative overflow-hidden">
             <img 
               src={`http://localhost:8080${product.imgpath}`} 
               alt={product.name}
-              className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300 cursor-pointer"
-              onClick={() => setSelectedProductId(product.pid)}
+              className="w-full h-40 sm:h-48 object-cover group-hover:scale-105 transition-transform duration-300"
             />
             <div className="absolute top-2 right-2">
               <Button 
                 size="sm" 
                 variant="secondary" 
-                onClick={() => toggleWishlist(product)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleWishlist(product);
+                }}
                 className={`rounded-full w-8 h-8 p-0 bg-white/80 hover:bg-white ${
                   wishlistItems.includes(product.pid) 
                     ? 'text-red-500 hover:text-red-600' 
@@ -158,25 +185,11 @@ const ProductList: React.FC = () => {
                 <Heart className={`h-4 w-4 ${wishlistItems.includes(product.pid) ? 'fill-current' : ''}`} />
               </Button>
             </div>
-            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-              <Button
-                size="sm"
-                variant="secondary"
-                onClick={() => setSelectedProductId(product.pid)}
-                className="bg-white/90 hover:bg-white backdrop-blur-sm"
-              >
-                <Eye className="h-4 w-4 mr-2" />
-                View Details
-              </Button>
-            </div>
           </div>
           
-          <CardContent className="p-4">
+          <CardContent className="p-3 sm:p-4">
             <div className="mb-2">
-              <h3 
-                className="font-semibold text-foreground line-clamp-2 cursor-pointer hover:text-primary transition-colors"
-                onClick={() => setSelectedProductId(product.pid)}
-              >
+              <h3 className="font-semibold text-foreground line-clamp-2 hover:text-primary transition-colors">
                 {product.name}
               </h3>
               <div className="flex items-center mt-1">
@@ -191,17 +204,20 @@ const ProductList: React.FC = () => {
               {product.detail}
             </p>
             
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0">
               <div>
-                <span className="text-lg font-bold text-primary">₹{product.price}</span>
+                <span className="text-base sm:text-lg font-bold text-primary">₹{product.price}</span>
                 <span className="text-xs text-muted-foreground ml-1">incl. tax</span>
               </div>
               
               <Button
                 size="sm"
-                onClick={() => addToCart(product.pid)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  addToCart(product.pid);
+                }}
                 disabled={addingToCart === product.pid}
-                className="flex items-center space-x-1 bg-primary hover:bg-primary/90"
+                className="flex items-center space-x-1 bg-primary hover:bg-primary/90 w-full sm:w-auto"
               >
                 {addingToCart === product.pid ? (
                   <Loader2 className="h-4 w-4 animate-spin" />

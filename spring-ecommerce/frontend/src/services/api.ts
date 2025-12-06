@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { ApiResponse, LoginRequest, RegisterRequest, Product } from '../types';
+import type { ApiResponse, LoginRequest, RegisterRequest, Product, Wishlist } from '../types';
 
 const API_BASE_URL = 'http://localhost:8080/api';
 
@@ -25,6 +25,20 @@ export const authAPI = {
   
   register: (data: RegisterRequest): Promise<ApiResponse<string>> =>
     api.post('/auth/register', data).then((res) => res.data),
+};
+
+export const wishlistAPI = {
+  getAll: (): Promise<ApiResponse<Wishlist[]>> =>
+    api.get('/wishlist').then((res) => res.data),
+  
+  add: (productId: number): Promise<ApiResponse<Wishlist>> =>
+    api.post(`/wishlist/add/${productId}`).then((res) => res.data),
+  
+  remove: (productId: number): Promise<ApiResponse<string>> =>
+    api.delete(`/wishlist/remove/${productId}`).then((res) => res.data),
+  
+  check: (productId: number): Promise<ApiResponse<boolean>> =>
+    api.get(`/wishlist/check/${productId}`).then((res) => res.data),
 };
 
 export const productAPI = {

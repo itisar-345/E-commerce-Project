@@ -27,7 +27,7 @@ public class OrderService {
         
         List<Order> orders = cartItems.stream()
                 .map(cart -> {
-                    Order order = new Order(user, cart.getProduct(), cart.getPrice());
+                    Order order = new Order(user, cart.getProduct(), cart.getPrice(), cart.getQuantity(), cart.getSize());
                     return order;
                 })
                 .toList();

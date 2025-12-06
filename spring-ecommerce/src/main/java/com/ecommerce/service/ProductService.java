@@ -4,6 +4,10 @@ import com.ecommerce.entity.Product;
 import com.ecommerce.entity.User;
 import com.ecommerce.repository.ProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
@@ -22,19 +26,26 @@ public class ProductService {
     
     private final String uploadDir = "src/main/resources/static/images/";
     
+    @Cacheable("products")
     public List<Product> getAllProducts() {
         return productRepository.findAll();
+    }
+    
+    public Page<Product> getAllProducts(Pageable pageable) {
+        return productRepository.findAll(pageable);
     }
     
     public List<Product> getProductsByVendor(User vendor) {
         return productRepository.findByVendor(vendor);
     }
     
+    @Cacheable(value = "product", key = "#id")
     public Product getProductById(Long id) {
         return productRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Product not found"));
     }
     
+    @CacheEvict(value = "products", allEntries = true)
     public Product createProduct(String name, BigDecimal price, String detail, 
                                MultipartFile image, User vendor) throws IOException {
         String imagePath = saveImage(image);
@@ -49,6 +60,7 @@ public class ProductService {
         return productRepository.save(product);
     }
     
+    @CacheEvict(value = {"products", "product"}, allEntries = true)
     public Product updateProduct(Long id, String name, BigDecimal price, 
                                String detail, MultipartFile image) throws IOException {
         Product product = getProductById(id);
@@ -65,6 +77,7 @@ public class ProductService {
         return productRepository.save(product);
     }
     
+    @CacheEvict(value = {"products", "product"}, allEntries = true)
     public void deleteProduct(Long id) {
         productRepository.deleteById(id);
     }
