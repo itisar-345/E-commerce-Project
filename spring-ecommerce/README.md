@@ -154,6 +154,46 @@ POST /api/orders/place                       # Place order
 GET /api/orders/vendor                       # Vendor's orders
 ```
 
+## 💻 How to Run
+
+Follow these steps to run the complete application:
+
+### 1. MySQL Database Setup
+```mysql
+# Open MySQL shell
+mysqlsh
+
+# Connect to MySQL server
+\sql 
+\connect root@localhost
+
+# Verify databases
+SHOW DATABASES;
+
+# Select the ecom database
+USE ecom;
+
+# Verify tables
+SHOW TABLES;
+```
+
+### 2. Start Backend (Terminal 1)
+```bash
+mvn spring-boot:run
+```
+
+### 3. Start Frontend (Terminal 2)
+```bash
+cd frontend
+npm run dev
+```
+
+### Access Points
+- **Frontend**: http://localhost:5173
+- **Backend API**: http://localhost:8080
+
+---
+
 ## 🚀 Quick Start
 
 ### System Requirements
