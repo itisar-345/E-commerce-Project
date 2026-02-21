@@ -2,6 +2,7 @@ package com.ecommerce.service;
 
 import com.ecommerce.dto.LoginRequest;
 import com.ecommerce.dto.RegisterRequest;
+import com.ecommerce.dto.TokenResponse;
 import com.ecommerce.entity.User;
 import com.ecommerce.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,7 +36,7 @@ public class AuthService {
         return "User registered successfully";
     }
     
-    public String login(LoginRequest request) {
+    public TokenResponse login(LoginRequest request) {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new RuntimeException("User not found"));
         
@@ -43,6 +44,22 @@ public class AuthService {
             throw new RuntimeException("Invalid credentials");
         }
         
-        return jwtService.generateToken(user);
+        String accessToken = jwtService.generateAccessToken(user);
+        String refreshToken = jwtService.generateRefreshToken(user);
+        
+        return new TokenResponse(accessToken, refreshToken);
+    }
+    
+    public TokenResponse refreshToken(String refreshToken) {
+        if (!jwtService.isTokenValid(refreshToken)) {
+            throw new RuntimeException("Invalid refresh token");
+        }
+        
+        String email = jwtService.extractEmail(refreshToken);
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        
+        String newAccessToken = jwtService.generateAccessToken(user);
+        return new TokenResponse(newAccessToken, refreshToken);
     }
 }

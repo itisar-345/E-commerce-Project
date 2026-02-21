@@ -12,15 +12,48 @@ const api = axios.create({
 
 // Add token to requests if available
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem('accessToken');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
 });
 
+// Handle token refresh on 401
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+    
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+      
+      const refreshToken = localStorage.getItem('refreshToken');
+      if (refreshToken) {
+        try {
+          const response = await axios.post(`${API_BASE_URL}/auth/refresh`, refreshToken, {
+            headers: { 'Content-Type': 'text/plain' }
+          });
+          
+          if (response.data.success && response.data.data) {
+            localStorage.setItem('accessToken', response.data.data.accessToken);
+            originalRequest.headers.Authorization = `Bearer ${response.data.data.accessToken}`;
+            return api(originalRequest);
+          }
+        } catch (err) {
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('refreshToken');
+          window.location.href = '/login';
+        }
+      }
+    }
+    
+    return Promise.reject(error);
+  }
+);
+
 export const authAPI = {
-  login: (data: LoginRequest): Promise<ApiResponse<string>> =>
+  login: (data: LoginRequest): Promise<ApiResponse<{accessToken: string, refreshToken: string}>> =>
     api.post('/auth/login', data).then((res) => res.data),
   
   register: (data: RegisterRequest): Promise<ApiResponse<string>> =>

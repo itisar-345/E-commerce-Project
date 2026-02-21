@@ -7,7 +7,7 @@ import { Input } from './ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 
 interface LoginProps {
-  onLogin: (token: string) => void;
+  onLogin: (accessToken: string, refreshToken: string) => void;
   onSwitchToRegister: () => void;
 }
 
@@ -27,8 +27,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, onSwitchToRegister }) => {
     try {
       const response = await authAPI.login(formData);
       if (response.success && response.data) {
-        localStorage.setItem('token', response.data);
-        onLogin(response.data);
+        onLogin(response.data.accessToken, response.data.refreshToken);
       } else {
         setError(response.message);
       }

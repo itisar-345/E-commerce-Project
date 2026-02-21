@@ -16,22 +16,41 @@ public class JwtService {
     @Value("${JWT_SECRET}")
     private String secret;
     
-    @Value("${jwt.expiration:86400000}")
-    private Long expiration;
+    @Value("${jwt.access-token-expiration}")
+    private Long accessTokenExpiration;
+    
+    @Value("${jwt.refresh-token-expiration}")
+    private Long refreshTokenExpiration;
     
     private Key getSigningKey() {
         return Keys.hmacShaKeyFor(secret.getBytes());
     }
     
-    public String generateToken(User user) {
+    public String generateAccessToken(User user) {
         return Jwts.builder()
                 .setSubject(user.getEmail())
                 .claim("userId", user.getUserid())
                 .claim("userType", user.getUsertype())
+                .claim("tokenType", "ACCESS")
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + expiration))
+                .setExpiration(new Date(System.currentTimeMillis() + accessTokenExpiration))
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)
                 .compact();
+    }
+    
+    public String generateRefreshToken(User user) {
+        return Jwts.builder()
+                .setSubject(user.getEmail())
+                .claim("userId", user.getUserid())
+                .claim("tokenType", "REFRESH")
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + refreshTokenExpiration))
+                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
+                .compact();
+    }
+    
+    public String generateToken(User user) {
+        return generateAccessToken(user);
     }
     
     public Claims extractClaims(String token) {

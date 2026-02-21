@@ -6,8 +6,6 @@ import com.ecommerce.entity.Wishlist;
 import com.ecommerce.repository.ProductRepository;
 import com.ecommerce.repository.WishlistRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
@@ -21,13 +19,11 @@ public class WishlistService {
     @Autowired
     private ProductRepository productRepository;
     
-    @Cacheable(value = "wishlist", key = "#user.userid")
     public List<Wishlist> getUserWishlist(User user) {
         return wishlistRepository.findByUser(user);
     }
     
     @Transactional
-    @CacheEvict(value = "wishlist", key = "#user.userid")
     public Wishlist addToWishlist(User user, Long productId) {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new RuntimeException("Product not found"));
@@ -41,7 +37,6 @@ public class WishlistService {
     }
     
     @Transactional
-    @CacheEvict(value = "wishlist", key = "#user.userid")
     public void removeFromWishlist(User user, Long productId) {
         wishlistRepository.deleteByUserAndProductPid(user, productId);
     }

@@ -3,6 +3,7 @@ package com.ecommerce.controller;
 import com.ecommerce.dto.ApiResponse;
 import com.ecommerce.dto.LoginRequest;
 import com.ecommerce.dto.RegisterRequest;
+import com.ecommerce.dto.TokenResponse;
 import com.ecommerce.service.AuthService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,10 +29,20 @@ public class AuthController {
     }
     
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse<String>> login(@Valid @RequestBody LoginRequest request) {
+    public ResponseEntity<ApiResponse<TokenResponse>> login(@Valid @RequestBody LoginRequest request) {
         try {
-            String token = authService.login(request);
-            return ResponseEntity.ok(ApiResponse.success("Login successful", token));
+            TokenResponse tokens = authService.login(request);
+            return ResponseEntity.ok(ApiResponse.success("Login successful", tokens));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
+        }
+    }
+    
+    @PostMapping("/refresh")
+    public ResponseEntity<ApiResponse<TokenResponse>> refresh(@RequestBody String refreshToken) {
+        try {
+            TokenResponse tokens = authService.refreshToken(refreshToken);
+            return ResponseEntity.ok(ApiResponse.success("Token refreshed", tokens));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
         }

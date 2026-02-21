@@ -19,20 +19,21 @@ function App() {
   const [showHeader, setShowHeader] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
+    const accessToken = localStorage.getItem('accessToken');
     const storedUserType = localStorage.getItem('userType') as 'CUSTOMER' | 'VENDOR' | null;
-    if (token && storedUserType) {
+    if (accessToken && storedUserType) {
       setIsAuthenticated(true);
       setUserType(storedUserType);
       setCurrentView('dashboard');
     }
   }, []);
 
-  const handleLogin = (token: string) => {
-    localStorage.setItem('token', token);
+  const handleLogin = (accessToken: string, refreshToken: string) => {
+    localStorage.setItem('accessToken', accessToken);
+    localStorage.setItem('refreshToken', refreshToken);
     
     try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
+      const payload = JSON.parse(atob(accessToken.split('.')[1]));
       const userType = payload.userType as 'CUSTOMER' | 'VENDOR';
       
       localStorage.setItem('userType', userType);
@@ -41,12 +42,14 @@ function App() {
       setCurrentView('dashboard');
     } catch (error) {
       console.error('Failed to decode token:', error);
-      localStorage.removeItem('token');
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
     }
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
     localStorage.removeItem('userType');
     setIsAuthenticated(false);
     setUserType(null);
