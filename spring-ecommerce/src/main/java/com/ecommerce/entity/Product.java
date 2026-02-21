@@ -27,6 +27,20 @@ public class Product {
     @JoinColumn(name = "vendor_id", referencedColumnName = "userid")
     private User vendor;
     
+    private String sizes;
+    
+    @Column(nullable = false)
+    private Integer stock = 0;
+    
+    @Version
+    private Long version;
+    
+    @Transient
+    private Double averageRating;
+    
+    @Transient
+    private Long reviewCount;
+    
     // Constructors
     public Product() {}
     
@@ -56,4 +70,19 @@ public class Product {
     
     public User getVendor() { return vendor; }
     public void setVendor(User vendor) { this.vendor = vendor; }
+    
+    public String getSizes() { return sizes; }
+    public void setSizes(String sizes) { this.sizes = sizes; }
+    
+    public Integer getStock() { return stock; }
+    public void setStock(Integer stock) { this.stock = stock; }
+    
+    public Long getVersion() { return version; }
+    public void setVersion(Long version) { this.version = version; }
+    
+    public Double getAverageRating() { return averageRating; }
+    public void setAverageRating(Double averageRating) { this.averageRating = averageRating; }
+    
+    public Long getReviewCount() { return reviewCount; }
+    public void setReviewCount(Long reviewCount) { this.reviewCount = reviewCount; }
 }

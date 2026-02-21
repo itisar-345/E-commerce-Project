@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { ApiResponse, LoginRequest, RegisterRequest, Product, Wishlist } from '../types';
+import type { ApiResponse, LoginRequest, RegisterRequest, Product, Wishlist, Review } from '../types';
 
 const API_BASE_URL = 'http://localhost:8080/api';
 
@@ -39,6 +39,19 @@ export const wishlistAPI = {
   
   check: (productId: number): Promise<ApiResponse<boolean>> =>
     api.get(`/wishlist/check/${productId}`).then((res) => res.data),
+};
+
+export const reviewAPI = {
+  getProductReviews: (productId: number): Promise<ApiResponse<Review[]>> =>
+    axios.get(`${API_BASE_URL}/reviews/product/${productId}`).then((res) => res.data),
+  
+  addReview: (productId: number, rating: number, comment?: string): Promise<ApiResponse<Review>> =>
+    api.post(`/reviews/product/${productId}`, null, {
+      params: { rating, comment }
+    }).then((res) => res.data),
+  
+  canReview: (productId: number): Promise<ApiResponse<boolean>> =>
+    api.get(`/reviews/can-review/${productId}`).then((res) => res.data),
 };
 
 export const productAPI = {

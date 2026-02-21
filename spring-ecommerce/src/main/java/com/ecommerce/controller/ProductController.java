@@ -65,15 +65,17 @@ public class ProductController {
             @RequestParam BigDecimal price,
             @RequestParam String detail,
             @RequestParam MultipartFile image,
+            @RequestParam(defaultValue = "0") Integer stock,
+            @RequestParam(required = false) String sizes,
             @RequestHeader("Authorization") String token) {
         try {
-            System.out.println("Creating product: " + name + ", Price: " + price);
+            System.out.println("Creating product: " + name + ", Price: " + price + ", Stock: " + stock);
             String email = jwtService.extractEmail(token.substring(7));
             User vendor = userRepository.findByEmail(email)
                     .orElseThrow(() -> new RuntimeException("User not found"));
             
             System.out.println("Vendor found: " + vendor.getUsername());
-            Product product = productService.createProduct(name, price, detail, image, vendor);
+            Product product = productService.createProduct(name, price, detail, image, vendor, stock, sizes);
             System.out.println("Product created with ID: " + product.getPid());
             return ResponseEntity.ok(ApiResponse.success("Product created successfully", product));
         } catch (Exception e) {
@@ -90,9 +92,11 @@ public class ProductController {
             @RequestParam String name,
             @RequestParam BigDecimal price,
             @RequestParam String detail,
-            @RequestParam(required = false) MultipartFile image) {
+            @RequestParam(required = false) MultipartFile image,
+            @RequestParam(required = false) Integer stock,
+            @RequestParam(required = false) String sizes) {
         try {
-            Product product = productService.updateProduct(id, name, price, detail, image);
+            Product product = productService.updateProduct(id, name, price, detail, image, stock, sizes);
             return ResponseEntity.ok(ApiResponse.success("Product updated successfully", product));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));

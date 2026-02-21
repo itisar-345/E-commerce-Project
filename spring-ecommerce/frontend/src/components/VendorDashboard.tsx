@@ -25,6 +25,8 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({ searchQuery = '', onV
     name: '',
     price: '',
     detail: '',
+    stock: '',
+    sizes: [] as string[],
     image: null as File | null
   });
 
@@ -78,12 +80,14 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({ searchQuery = '', onV
     uploadData.append('name', formData.name);
     uploadData.append('price', formData.price);
     uploadData.append('detail', formData.detail);
+    uploadData.append('stock', formData.stock);
+    uploadData.append('sizes', formData.sizes.join(','));
     uploadData.append('image', formData.image);
 
     try {
       await productAPI.create(uploadData);
       setShowUploadForm(false);
-      setFormData({ name: '', price: '', detail: '', image: null });
+      setFormData({ name: '', price: '', detail: '', stock: '', sizes: [], image: null });
       loadVendorProducts();
       loadVendorOrders();
     } catch (err) {
@@ -169,6 +173,42 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({ searchQuery = '', onV
                 onChange={(e) => setFormData({...formData, detail: e.target.value})}
                 required
               />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Stock Quantity</label>
+              <Input
+                type="number"
+                placeholder="Enter stock quantity"
+                value={formData.stock}
+                onChange={(e) => setFormData({...formData, stock: e.target.value})}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Available Sizes</label>
+              <div className="grid grid-cols-3 gap-2">
+                {['XS', 'S', 'M', 'L', 'XL', 'OneSize'].map((size) => (
+                  <button
+                    key={size}
+                    type="button"
+                    onClick={() => {
+                      setFormData(prev => ({
+                        ...prev,
+                        sizes: prev.sizes.includes(size)
+                          ? prev.sizes.filter(s => s !== size)
+                          : [...prev.sizes, size]
+                      }));
+                    }}
+                    className={`p-2 border rounded-md text-sm font-medium transition-colors ${
+                      formData.sizes.includes(size)
+                        ? 'bg-primary text-primary-foreground border-primary'
+                        : 'bg-background hover:bg-accent'
+                    }`}
+                  >
+                    {size}
+                  </button>
+                ))}
+              </div>
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Product Image</label>

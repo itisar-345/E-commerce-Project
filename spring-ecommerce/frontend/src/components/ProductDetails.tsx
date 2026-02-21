@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, ShoppingCart, Star, Heart, Truck, Shield, RotateCcw, Loader2, LogIn, Plus, Minus, Edit2, X } from 'lucide-react';
-import type { Product } from '../types/index';
-import { productAPI, wishlistAPI } from '../services/api';
+import type { Product, Review } from '../types/index';
+import { productAPI, wishlistAPI, reviewAPI } from '../services/api';
 import api from '../services/api';
 import { Button } from './ui/button';
 import { Card, CardContent } from './ui/card';
@@ -20,18 +20,22 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ productId, onBack, isPu
   const [loading, setLoading] = useState(true);
   const [addingToCart, setAddingToCart] = useState(false);
   const [quantity, setQuantity] = useState(1);
-  const [selectedSize, setSelectedSize] = useState<string>('M');
+  const [selectedSize, setSelectedSize] = useState<string>('');
   const [isEditing, setIsEditing] = useState(false);
-  const [editData, setEditData] = useState({ name: '', price: '', detail: '', image: null as File | null });
+  const [editData, setEditData] = useState({ name: '', price: '', detail: '', stock: '', sizes: [] as string[], image: null as File | null });
   const [deleting, setDeleting] = useState(false);
-  
-  const sizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
   const [isWishlisted, setIsWishlisted] = useState(false);
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [canReview, setCanReview] = useState(false);
+  const [showReviewForm, setShowReviewForm] = useState(false);
+  const [reviewData, setReviewData] = useState({ rating: 5, comment: '' });
 
   useEffect(() => {
     loadProduct();
-    if (!isVendor) {
+    loadReviews();
+    if (!isVendor && !isPublic) {
       checkWishlistStatus();
+      checkCanReview();
     }
   }, [productId]);
 
@@ -47,15 +51,65 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ productId, onBack, isPu
     }
   };
 
+  const loadReviews = async () => {
+    try {
+      const response = await reviewAPI.getProductReviews(productId);
+      if (response.success && response.data) {
+        setReviews(response.data);
+      }
+    } catch (err) {
+      console.error('Failed to load reviews');
+    }
+  };
+
+  const checkCanReview = async () => {
+    try {
+      const response = await reviewAPI.canReview(productId);
+      if (response.success && response.data !== undefined) {
+        setCanReview(response.data);
+      }
+    } catch (err) {
+      console.error('Failed to check review eligibility');
+    }
+  };
+
+  const submitReview = async () => {
+    try {
+      await reviewAPI.addReview(productId, reviewData.rating, reviewData.comment);
+      setShowReviewForm(false);
+      setReviewData({ rating: 5, comment: '' });
+      loadReviews();
+      setCanReview(false);
+      
+      const successDiv = document.createElement('div');
+      successDiv.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-md shadow-lg z-50';
+      successDiv.textContent = 'Review submitted successfully!';
+      document.body.appendChild(successDiv);
+      setTimeout(() => document.body.removeChild(successDiv), 2000);
+    } catch (err: any) {
+      const errorDiv = document.createElement('div');
+      errorDiv.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-md shadow-lg z-50';
+      errorDiv.textContent = err.response?.data?.message || 'Failed to submit review';
+      document.body.appendChild(errorDiv);
+      setTimeout(() => document.body.removeChild(errorDiv), 3000);
+    }
+  };
+
   const loadProduct = async () => {
     try {
       const response = await productAPI.getById(productId);
       if (response.success && response.data) {
         setProduct(response.data);
+        const availableSizes = response.data.sizes ? response.data.sizes.split(',') : [];
+        if (availableSizes.length > 0 && !isVendor) {
+          setSelectedSize(availableSizes[0]);
+        }
         setEditData({
           name: response.data.name,
           price: response.data.price.toString(),
           detail: response.data.detail,
+          stock: response.data.stock?.toString() || '0',
+          sizes: availableSizes,
           image: null
         });
       }
@@ -69,6 +123,14 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ productId, onBack, isPu
   const addToCart = async () => {
     if (isPublic && onLoginRequired) {
       onLoginRequired();
+      return;
+    }
+    if (!selectedSize) {
+      const errorDiv = document.createElement('div');
+      errorDiv.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-md shadow-lg z-50';
+      errorDiv.textContent = 'Please select a size';
+      document.body.appendChild(errorDiv);
+      setTimeout(() => document.body.removeChild(errorDiv), 2000);
       return;
     }
     setAddingToCart(true);
@@ -222,12 +284,12 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ productId, onBack, isPu
             )}
 
             {/* Size Selector */}
-            {!isVendor && (
+            {!isVendor && product.sizes && (
             <Card>
               <CardContent className="p-4 sm:p-6">
-                <h3 className="font-semibold text-foreground mb-3">Select Size</h3>
+                <h3 className="font-semibold text-foreground mb-3">Select Size <span className="text-red-500">*</span></h3>
                 <div className="flex flex-wrap gap-2">
-                  {sizes.map((size) => (
+                  {product.sizes.split(',').map((size) => (
                     <button
                       key={size}
                       onClick={() => setSelectedSize(size)}
@@ -243,7 +305,6 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ productId, onBack, isPu
                 </div>
               </CardContent>
             </Card>
-
             )}
             
             {/* Quantity Selector */}
@@ -311,6 +372,41 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ productId, onBack, isPu
                           />
                         </div>
                         <div>
+                          <label className="text-sm font-medium">Stock Quantity</label>
+                          <input
+                            type="number"
+                            value={editData.stock}
+                            onChange={(e) => setEditData({...editData, stock: e.target.value})}
+                            className="w-full mt-1 p-2 border border-border rounded-md"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium">Available Sizes</label>
+                          <div className="grid grid-cols-3 gap-2 mt-2">
+                            {['XS', 'S', 'M', 'L', 'XL', 'OneSize'].map((size) => (
+                              <button
+                                key={size}
+                                type="button"
+                                onClick={() => {
+                                  setEditData(prev => ({
+                                    ...prev,
+                                    sizes: prev.sizes.includes(size)
+                                      ? prev.sizes.filter(s => s !== size)
+                                      : [...prev.sizes, size]
+                                  }));
+                                }}
+                                className={`p-2 border rounded-md text-sm font-medium transition-colors ${
+                                  editData.sizes.includes(size)
+                                    ? 'bg-primary text-primary-foreground border-primary'
+                                    : 'bg-background hover:bg-accent'
+                                }`}
+                              >
+                                {size}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                        <div>
                           <label className="text-sm font-medium">Change Image (Optional)</label>
                           <input
                             type="file"
@@ -334,6 +430,8 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ productId, onBack, isPu
                                 formData.append('name', editData.name);
                                 formData.append('price', editData.price);
                                 formData.append('detail', editData.detail);
+                                formData.append('stock', editData.stock);
+                                formData.append('sizes', editData.sizes.join(','));
                                 if (editData.image) formData.append('image', editData.image);
                                 
                                 await productAPI.update(productId, formData);
@@ -436,6 +534,105 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ productId, onBack, isPu
             )}
           </div>
         </div>
+
+        {/* Reviews Section */}
+        <Card className="mt-8">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-foreground">Customer Reviews</h2>
+              {canReview && !isVendor && (
+                <Button onClick={() => setShowReviewForm(true)} size="sm">
+                  Write a Review
+                </Button>
+              )}
+            </div>
+
+            {showReviewForm && (
+              <Card className="mb-6 bg-accent/50">
+                <CardContent className="p-4">
+                  <h3 className="font-semibold mb-4">Write Your Review</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-sm font-medium mb-2 block">Rating</label>
+                      <div className="flex gap-2">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <button
+                            key={star}
+                            onClick={() => setReviewData({ ...reviewData, rating: star })}
+                            className="focus:outline-none"
+                          >
+                            <Star
+                              className={`h-8 w-8 ${
+                                star <= reviewData.rating
+                                  ? 'fill-yellow-400 text-yellow-400'
+                                  : 'text-gray-300'
+                              }`}
+                            />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium mb-2 block">Comment (Optional)</label>
+                      <textarea
+                        value={reviewData.comment}
+                        onChange={(e) => setReviewData({ ...reviewData, comment: e.target.value })}
+                        className="w-full p-3 border border-border rounded-md"
+                        rows={3}
+                        placeholder="Share your experience with this product..."
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="outline" onClick={() => setShowReviewForm(false)}>
+                        Cancel
+                      </Button>
+                      <Button onClick={submitReview}>Submit Review</Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {reviews.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <Star className="h-12 w-12 mx-auto mb-2 text-gray-300" />
+                <p>No reviews yet. Be the first to review this product!</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {reviews.map((review) => (
+                  <Card key={review.id}>
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between mb-2">
+                        <div>
+                          <p className="font-semibold">{review.user.username}</p>
+                          <div className="flex items-center gap-1 mt-1">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                              <Star
+                                key={star}
+                                className={`h-4 w-4 ${
+                                  star <= review.rating
+                                    ? 'fill-yellow-400 text-yellow-400'
+                                    : 'text-gray-300'
+                                }`}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                        <span className="text-sm text-muted-foreground">
+                          {new Date(review.createdAt).toLocaleDateString()}
+                        </span>
+                      </div>
+                      {review.comment && (
+                        <p className="text-muted-foreground mt-2">{review.comment}</p>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

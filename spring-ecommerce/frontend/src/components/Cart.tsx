@@ -14,8 +14,6 @@ const Cart: React.FC = () => {
   const [editingItem, setEditingItem] = useState<number | null>(null);
   const [editQuantity, setEditQuantity] = useState<number>(1);
   const [editSize, setEditSize] = useState<string>('');
-  
-  const sizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
 
   useEffect(() => {
     loadCart();
@@ -146,7 +144,7 @@ const Cart: React.FC = () => {
                           <div>
                             <label className="text-xs font-medium text-muted-foreground">Size</label>
                             <div className="flex gap-1 mt-1">
-                              {sizes.map((size) => (
+                              {item.product.sizes?.split(',').map((size) => (
                                 <button
                                   key={size}
                                   onClick={() => setEditSize(size)}

@@ -64,18 +64,15 @@ CREATE TABLE IF NOT EXISTS wishlist (
     UNIQUE KEY unique_user_product (userid, pid)
 );
 
--- Insert sample data
-INSERT INTO user (username, email, password, usertype) VALUES
-('admin', 'admin@example.com', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'VENDOR'),
-('customer1', 'customer@example.com', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'CUSTOMER');
-
--- Insert sample products
-INSERT INTO product (name, price, detail, imgpath, vendor_id) VALUES
-('Men Formal Shirt', 1299.00, 'Premium quality formal shirt for men', '/images/MFormal.jpg', 1),
-('Men Jeans', 1599.00, 'Comfortable denim jeans for casual wear', '/images/MJeans.jpg', 1),
-('Men Kurta', 899.00, 'Traditional kurta for ethnic occasions', '/images/MKurta.jpg', 1),
-('Men Polo T-Shirt', 799.00, 'Stylish polo t-shirt for casual outings', '/images/MPolo.jpg', 1),
-('Women Blazer', 2199.00, 'Professional blazer for office wear', '/images/wBLAZER.jpg', 1),
-('Women Dress', 1799.00, 'Elegant dress for special occasions', '/images/WDress.jpg', 1),
-('Women Jeans', 1399.00, 'Trendy jeans for everyday wear', '/images/WJeans.jpg', 1),
-('Women Kurti', 699.00, 'Beautiful kurti for casual and ethnic wear', '/images/Wkurti.jpg', 1);
+-- Review table
+CREATE TABLE IF NOT EXISTS review (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    userid BIGINT NOT NULL,
+    pid BIGINT NOT NULL,
+    rating INT NOT NULL CHECK (rating >= 1 AND rating <= 5),
+    comment TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (userid) REFERENCES user(userid) ON DELETE CASCADE,
+    FOREIGN KEY (pid) REFERENCES product(pid) ON DELETE CASCADE,
+    UNIQUE KEY unique_user_product_review (userid, pid)
+);

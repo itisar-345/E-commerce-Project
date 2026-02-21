@@ -12,6 +12,10 @@ export interface Product {
   detail: string;
   imgpath: string;
   vendor?: User;
+  sizes?: string;
+  stock?: number;
+  averageRating?: number;
+  reviewCount?: number;
 }
 
 export interface Cart {
@@ -39,6 +43,15 @@ export interface Wishlist {
   user: User;
   product: Product;
   addedAt: string;
+}
+
+export interface Review {
+  id: number;
+  user: User;
+  product: Product;
+  rating: number;
+  comment?: string;
+  createdAt: string;
 }
 
 export interface ApiResponse<T> {

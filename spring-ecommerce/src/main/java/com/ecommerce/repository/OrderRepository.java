@@ -13,4 +13,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     
     @Query("SELECT o FROM Order o WHERE o.product.vendor = :vendor")
     List<Order> findByVendor(User vendor);
+    
+    boolean existsByUserUseridAndProductPid(Long userid, Long pid);
+    boolean existsByUserUseridAndProductPidAndStatus(Long userid, Long pid, Order.OrderStatus status);
 }

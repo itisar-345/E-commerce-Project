@@ -194,9 +194,18 @@ const ProductList: React.FC<ProductListProps> = ({ searchQuery = '', onViewProdu
               </h3>
               <div className="flex items-center mt-1">
                 {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="h-3 w-3 fill-primary/60 text-primary/60" />
+                  <Star 
+                    key={i} 
+                    className={`h-3 w-3 ${
+                      i < Math.round(product.averageRating || 0)
+                        ? 'fill-yellow-400 text-yellow-400'
+                        : 'fill-gray-200 text-gray-200'
+                    }`} 
+                  />
                 ))}
-                <span className="text-xs text-muted-foreground ml-1">(4.8)</span>
+                <span className="text-xs text-muted-foreground ml-1">
+                  {product.averageRating ? `(${product.averageRating.toFixed(1)})` : '(No reviews)'}
+                </span>
               </div>
             </div>
             
