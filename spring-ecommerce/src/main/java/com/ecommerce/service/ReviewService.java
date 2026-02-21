@@ -8,6 +8,7 @@ import com.ecommerce.repository.OrderRepository;
 import com.ecommerce.repository.ProductRepository;
 import com.ecommerce.repository.ReviewRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import java.util.List;
 
@@ -27,6 +28,7 @@ public class ReviewService {
         return reviewRepository.findByProductPid(productId);
     }
     
+    @CacheEvict(value = {"products", "product"}, allEntries = true)
     public Review addReview(User user, Long productId, Integer rating, String comment) {
         // Check if user has purchased the product and it's delivered
         boolean hasDeliveredOrder = orderRepository.existsByUserUseridAndProductPidAndStatus(
