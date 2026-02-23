@@ -6,6 +6,8 @@ import com.ecommerce.entity.User;
 import com.ecommerce.repository.CartRepository;
 import com.ecommerce.repository.ProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
@@ -19,10 +21,12 @@ public class CartService {
     @Autowired
     private ProductRepository productRepository;
     
+    @Cacheable(value = "cart", key = "'user:' + #user.userid")
     public List<Cart> getUserCart(User user) {
         return cartRepository.findByUser(user);
     }
     
+    @CacheEvict(value = "cart", key = "'user:' + #user.userid")
     public Cart addToCart(User user, Long productId, Integer quantity, String size) {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new RuntimeException("Product not found"));
@@ -64,6 +68,7 @@ public class CartService {
     }
     
     @Transactional
+    @CacheEvict(value = "cart", key = "'user:' + #user.userid")
     public void clearCart(User user) {
         cartRepository.deleteByUser(user);
     }

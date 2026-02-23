@@ -18,7 +18,7 @@ public class OrderService {
     private OrderRepository orderRepository;
     
     @Autowired
-    private CartService cartService;
+    private RedisCartService cartService;
     
     @Autowired
     private ProductRepository productRepository;

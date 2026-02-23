@@ -5,7 +5,7 @@ import com.ecommerce.entity.User;
 import com.ecommerce.entity.Wishlist;
 import com.ecommerce.repository.UserRepository;
 import com.ecommerce.service.JwtService;
-import com.ecommerce.service.WishlistService;
+import com.ecommerce.service.RedisWishlistService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,7 +17,7 @@ import java.util.List;
 public class WishlistController {
     
     @Autowired
-    private WishlistService wishlistService;
+    private RedisWishlistService wishlistService;
     
     @Autowired
     private JwtService jwtService;

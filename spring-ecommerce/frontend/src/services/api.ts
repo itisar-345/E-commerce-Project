@@ -31,20 +31,31 @@ api.interceptors.response.use(
       const refreshToken = localStorage.getItem('refreshToken');
       if (refreshToken) {
         try {
-          const response = await axios.post(`${API_BASE_URL}/auth/refresh`, refreshToken, {
-            headers: { 'Content-Type': 'text/plain' }
-          });
+          const response = await axios.post(`${API_BASE_URL}/auth/refresh`, 
+            JSON.stringify(refreshToken),
+            {
+              headers: { 'Content-Type': 'application/json' }
+            }
+          );
           
           if (response.data.success && response.data.data) {
-            localStorage.setItem('accessToken', response.data.data.accessToken);
-            originalRequest.headers.Authorization = `Bearer ${response.data.data.accessToken}`;
+            const { accessToken, refreshToken: newRefreshToken } = response.data.data;
+            localStorage.setItem('accessToken', accessToken);
+            if (newRefreshToken) {
+              localStorage.setItem('refreshToken', newRefreshToken);
+            }
+            originalRequest.headers.Authorization = `Bearer ${accessToken}`;
             return api(originalRequest);
           }
         } catch (err) {
           localStorage.removeItem('accessToken');
           localStorage.removeItem('refreshToken');
+          localStorage.removeItem('user');
           window.location.href = '/login';
         }
+      } else {
+        localStorage.clear();
+        window.location.href = '/login';
       }
     }
     

@@ -4,7 +4,7 @@ import com.ecommerce.dto.ApiResponse;
 import com.ecommerce.entity.Cart;
 import com.ecommerce.entity.User;
 import com.ecommerce.repository.UserRepository;
-import com.ecommerce.service.CartService;
+import com.ecommerce.service.RedisCartService;
 import com.ecommerce.service.JwtService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -17,7 +17,7 @@ import java.util.List;
 public class CartController {
     
     @Autowired
-    private CartService cartService;
+    private RedisCartService cartService;
     
     @Autowired
     private JwtService jwtService;
