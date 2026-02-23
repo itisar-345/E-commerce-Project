@@ -90,6 +90,13 @@ const PublicProductList: React.FC<PublicProductListProps> = ({ searchQuery = '',
               alt={product.name}
               className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
             />
+            {product.stock === 0 && (
+              <div className="absolute top-2 left-2">
+                <span className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">
+                  Out of Stock
+                </span>
+              </div>
+            )}
           </div>
           
           <CardContent className="p-4">

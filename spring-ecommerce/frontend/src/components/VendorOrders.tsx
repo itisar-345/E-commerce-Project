@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Package, Clock, CheckCircle, XCircle, User, Calendar, DollarSign, Loader2, Edit3, TrendingUp } from 'lucide-react';
+import { Package, Clock, CheckCircle, XCircle, User, Calendar, IndianRupee, Loader2, Edit3, TrendingUp } from 'lucide-react';
 import type { Order } from '../types/index';
 import api from '../services/api';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
@@ -80,7 +80,7 @@ const VendorOrders: React.FC = () => {
     pending: orders.filter(o => o.status === 'PENDING').length,
     delivered: orders.filter(o => o.status === 'DELIVERED').length,
     cancelled: orders.filter(o => o.status === 'CANCELLED').length,
-    revenue: orders.filter(o => o.status === 'DELIVERED').reduce((sum, o) => sum + o.price, 0)
+    revenue: orders.filter(o => o.status === 'DELIVERED').reduce((sum, o) => sum + (o.price * o.quantity), 0)
   };
 
   if (loading) {
@@ -235,8 +235,8 @@ const VendorOrders: React.FC = () => {
                             <span>{new Date(order.orderDate).toLocaleDateString()}</span>
                           </div>
                           <div className="flex items-center space-x-1">
-                            <DollarSign className="h-4 w-4" />
-                            <span>₹{order.price}</span>
+                            <IndianRupee className="h-4 w-4" />
+                            <span>{order.price}</span>
                           </div>
                           {order.quantity && (
                             <div className="flex items-center space-x-1">

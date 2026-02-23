@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, ShoppingCart, Star, Heart, Truck, Shield, RotateCcw, Loader2, LogIn, Plus, Minus, Edit2, X } from 'lucide-react';
+import { ArrowLeft, ShoppingCart, Star, Heart, Truck, Shield, RotateCcw, Loader2, LogIn, Plus, Minus, Edit2 } from 'lucide-react';
 import type { Product, Review } from '../types/index';
 import { productAPI, wishlistAPI, reviewAPI } from '../services/api';
 import api from '../services/api';
@@ -23,7 +23,6 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ productId, onBack, isPu
   const [selectedSize, setSelectedSize] = useState<string>('');
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState({ name: '', price: '', detail: '', stock: '', sizes: [] as string[], image: null as File | null });
-  const [deleting, setDeleting] = useState(false);
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [canReview, setCanReview] = useState(false);
@@ -148,7 +147,7 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ productId, onBack, isPu
     } catch (err) {
       const errorDiv = document.createElement('div');
       errorDiv.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-md shadow-lg z-50';
-      errorDiv.textContent = 'Failed to add to cart. Please login first.';
+      errorDiv.textContent = err.response?.data?.message || 'Failed to add to cart';
       document.body.appendChild(errorDiv);
       setTimeout(() => document.body.removeChild(errorDiv), 3000);
     } finally {
@@ -456,53 +455,20 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ productId, onBack, isPu
                     </CardContent>
                   </Card>
                 ) : (
-                  <div className="flex gap-3">
-                    <Button
-                      onClick={() => setIsEditing(true)}
-                      className="flex-1 bg-primary hover:bg-primary/90"
-                    >
-                      <Edit2 className="mr-2 h-5 w-5" />
-                      Edit Product
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      onClick={async () => {
-                        if (window.confirm('Mark this product as out of stock? This will delete the product.')) {
-                          setDeleting(true);
-                          try {
-                            await productAPI.delete(productId);
-                            const successDiv = document.createElement('div');
-                            successDiv.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-md shadow-lg z-50';
-                            successDiv.textContent = 'Product marked as out of stock!';
-                            document.body.appendChild(successDiv);
-                            setTimeout(() => document.body.removeChild(successDiv), 2000);
-                            onProductDeleted?.();
-                            onBack();
-                          } catch (err) {
-                            console.error('Failed to delete product');
-                          } finally {
-                            setDeleting(false);
-                          }
-                        }
-                      }}
-                      disabled={deleting}
-                      className="flex-1"
-                    >
-                      {deleting ? (
-                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                      ) : (
-                        <X className="mr-2 h-5 w-5" />
-                      )}
-                      Out of Stock
-                    </Button>
-                  </div>
+                  <Button
+                    onClick={() => setIsEditing(true)}
+                    className="w-full bg-primary hover:bg-primary/90"
+                  >
+                    <Edit2 className="mr-2 h-5 w-5" />
+                    Edit Product
+                  </Button>
                 )}
               </div>
             ) : (
             <div className="flex space-x-3 sm:space-x-4">
               <Button 
                 onClick={addToCart} 
-                disabled={addingToCart}
+                disabled={addingToCart || product.stock === 0}
                 className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground py-2 sm:py-3 text-base sm:text-lg"
               >
                 {addingToCart ? (
@@ -510,6 +476,8 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ productId, onBack, isPu
                     <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                     Adding...
                   </>
+                ) : product.stock === 0 ? (
+                  'Out of Stock'
                 ) : isPublic ? (
                   <>
                     <LogIn className="mr-2 h-5 w-5" />

@@ -125,9 +125,6 @@ export const productAPI = {
     api.put(`/products/${id}`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' }
     }).then((res) => res.data),
-  
-  delete: (id: number): Promise<ApiResponse<string>> =>
-    api.delete(`/products/${id}`).then((res) => res.data),
 };
 
 export default api;

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Package, TrendingUp, DollarSign, X, Upload, Trash2, Store, Search, Edit2 } from 'lucide-react';
+import { Plus, Package, TrendingUp, IndianRupee, X, Upload, Store, Search, Edit2 } from 'lucide-react';
 import { productAPI } from '../services/api';
 import api from '../services/api';
 import type { Product } from '../types/index';
@@ -97,16 +97,7 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({ searchQuery = '', onV
     }
   };
 
-  const handleDelete = async (id: number) => {
-    if (window.confirm('Are you sure you want to delete this product?')) {
-      try {
-        await productAPI.delete(id);
-        loadVendorProducts();
-      } catch (err) {
-        console.error('Delete failed');
-      }
-    }
-  };
+
 
   const handleViewProduct = (productId: number) => {
     setSelectedProductId(productId);
@@ -289,12 +280,12 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({ searchQuery = '', onV
             <CardContent className="p-4 sm:p-6">
               <div className="flex items-center space-x-3">
                 <div className="p-2 bg-purple-100 rounded-full">
-                  <DollarSign className="h-6 w-6 text-purple-600" />
+                  <IndianRupee className="h-6 w-6 text-purple-600" />
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Total Revenue</p>
                   <p className="text-xl sm:text-2xl font-bold text-foreground">
-                    ₹{orders.filter(order => order.status === 'DELIVERED').reduce((sum, order) => sum + order.price, 0)}
+                    {orders.filter(order => order.status === 'DELIVERED').reduce((sum, order) => sum + order.price, 0)}
                   </p>
                 </div>
               </div>
@@ -346,26 +337,15 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({ searchQuery = '', onV
                       <h3 className="font-semibold text-foreground mb-1 line-clamp-1">{product.name}</h3>
                       <p className="text-lg font-bold text-primary mb-2">₹{product.price}</p>
                       <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{product.detail}</p>
-                      <div className="flex gap-2">
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          onClick={() => handleViewProduct(product.pid)}
-                          className="flex-1 flex items-center space-x-2"
-                        >
-                          <Edit2 className="h-4 w-4" />
-                          <span>Edit</span>
-                        </Button>
-                        <Button 
-                          variant="destructive" 
-                          size="sm" 
-                          onClick={() => handleDelete(product.pid)}
-                          className="flex-1 flex items-center space-x-2"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                          <span>Delete</span>
-                        </Button>
-                      </div>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => handleViewProduct(product.pid)}
+                        className="w-full flex items-center justify-center space-x-2"
+                      >
+                        <Edit2 className="h-4 w-4" />
+                        <span>Edit</span>
+                      </Button>
                     </CardContent>
                   </Card>
                 ))}

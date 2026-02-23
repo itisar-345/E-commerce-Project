@@ -75,12 +75,13 @@ public class ProductService {
     @CacheEvict(value = {"products", "product"}, allEntries = true)
     public Product updateProduct(Long id, String name, BigDecimal price, 
                                String detail, MultipartFile image, Integer stock, String sizes) throws IOException {
-        Product product = getProductById(id);
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Product not found"));
         
         product.setName(name);
         product.setPrice(price);
         product.setDetail(detail);
-        if (stock != null) product.setStock(stock);
+        if (stock != null && stock >= 0) product.setStock(stock);
         if (sizes != null) product.setSizes(sizes);
         
         if (image != null && !image.isEmpty()) {
@@ -89,11 +90,6 @@ public class ProductService {
         }
         
         return productRepository.save(product);
-    }
-    
-    @CacheEvict(value = {"products", "product"}, allEntries = true)
-    public void deleteProduct(Long id) {
-        productRepository.deleteById(id);
     }
     
     private String saveImage(MultipartFile image) throws IOException {

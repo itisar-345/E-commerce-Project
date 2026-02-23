@@ -168,6 +168,13 @@ const ProductList: React.FC<ProductListProps> = ({ searchQuery = '', onViewProdu
               alt={product.name}
               className="w-full h-40 sm:h-48 object-cover group-hover:scale-105 transition-transform duration-300"
             />
+            {product.stock === 0 && (
+              <div className="absolute top-2 left-2">
+                <span className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">
+                  Out of Stock
+                </span>
+              </div>
+            )}
             <div className="absolute top-2 right-2">
               <Button 
                 size="sm" 
@@ -225,7 +232,7 @@ const ProductList: React.FC<ProductListProps> = ({ searchQuery = '', onViewProdu
                   e.stopPropagation();
                   addToCart(product.pid);
                 }}
-                disabled={addingToCart === product.pid}
+                disabled={addingToCart === product.pid || product.stock === 0}
                 className="flex items-center space-x-1 bg-primary hover:bg-primary/90 w-full sm:w-auto"
               >
                 {addingToCart === product.pid ? (
@@ -233,7 +240,7 @@ const ProductList: React.FC<ProductListProps> = ({ searchQuery = '', onViewProdu
                 ) : (
                   <ShoppingCart className="h-4 w-4" />
                 )}
-                <span>{addingToCart === product.pid ? 'Adding...' : 'Add'}</span>
+                <span>{product.stock === 0 ? 'Out of Stock' : addingToCart === product.pid ? 'Adding...' : 'Add'}</span>
               </Button>
             </div>
           </CardContent>

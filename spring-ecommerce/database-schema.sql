@@ -22,6 +22,9 @@ CREATE TABLE IF NOT EXISTS product (
     detail TEXT,
     imgpath VARCHAR(500),
     vendor_id BIGINT,
+    stock INT DEFAULT 0 NOT NULL,
+    sizes VARCHAR(255),
+    version BIGINT DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (vendor_id) REFERENCES user(userid) ON DELETE CASCADE
 );

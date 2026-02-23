@@ -173,6 +173,13 @@ const Wishlist: React.FC<WishlistProps> = ({ onBack, onViewProduct }) => {
                     className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300 cursor-pointer"
                     onClick={() => !editMode && setSelectedProductId(product.pid)}
                   />
+                  {product.stock === 0 && (
+                    <div className="absolute top-2 left-2">
+                      <span className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">
+                        Out of Stock
+                      </span>
+                    </div>
+                  )}
                   {editMode ? (
                     <div className="absolute top-2 right-2">
                       <input 
@@ -213,9 +220,18 @@ const Wishlist: React.FC<WishlistProps> = ({ onBack, onViewProduct }) => {
                     </h3>
                     <div className="flex items-center mt-1">
                       {[...Array(5)].map((_, i) => (
-                        <Star key={i} className="h-3 w-3 fill-primary/60 text-primary/60" />
+                        <Star 
+                            key={i} 
+                            className={`h-3 w-3 ${
+                              i < Math.round(product.averageRating || 0)
+                                ? 'fill-yellow-400 text-yellow-400'
+                                : 'fill-gray-200 text-gray-200'
+                            }`} 
+                        />
                       ))}
-                      <span className="text-xs text-muted-foreground ml-1">(4.8)</span>
+                      <span className="text-xs text-muted-foreground ml-1">
+                        {product.averageRating ? `(${product.averageRating.toFixed(1)})` : '(No reviews)'}
+                      </span>
                     </div>
                   </div>
                   
@@ -232,7 +248,7 @@ const Wishlist: React.FC<WishlistProps> = ({ onBack, onViewProduct }) => {
                     <Button
                       size="sm"
                       onClick={() => addToCart(product.pid)}
-                      disabled={addingToCart === product.pid}
+                      disabled={addingToCart === product.pid || product.stock === 0}
                       className="flex items-center space-x-1 bg-primary hover:bg-primary/90"
                     >
                       {addingToCart === product.pid ? (
@@ -240,7 +256,7 @@ const Wishlist: React.FC<WishlistProps> = ({ onBack, onViewProduct }) => {
                       ) : (
                         <ShoppingCart className="h-4 w-4" />
                       )}
-                      <span>{addingToCart === product.pid ? 'Adding...' : 'Add'}</span>
+                      <span>{product.stock === 0 ? 'Out of Stock' : addingToCart === product.pid ? 'Adding...' : 'Add'}</span>
                     </Button>
                   </div>
                 </CardContent>

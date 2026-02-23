@@ -93,10 +93,11 @@ spring-ecommerce/
 ### Tables
 ```sql
 user (userid, username, email, password, usertype, created_at)
-product (pid, name, price, detail, imgpath, vendor_id, created_at)
+product (pid, name, price, detail, imgpath, vendor_id, stock, sizes, version, created_at)
 cart (id, userid, pid, price, quantity, size, added_at)
 wishlist (id, userid, pid, added_at)
-orders (id, userid, pid, price, order_date, status)
+orders (id, userid, pid, price, quantity, size, order_date, status)
+review (id, userid, pid, rating, comment, created_at)
 ```
 
 ### Relationships
@@ -127,7 +128,6 @@ GET /api/products?page=0&size=10&sortBy=pid  # Paginated products
 GET /api/products/{id}                       # Cached by ID
 POST /api/products                           # Create (VENDOR only)
 PUT /api/products/{id}                       # Update (VENDOR only)
-DELETE /api/products/{id}                    # Delete (VENDOR only)
 GET /api/products/vendor                     # Vendor's products
 ```
 
@@ -152,6 +152,14 @@ GET /api/wishlist/check/{productId}          # Check if in wishlist
 GET /api/orders                              # Get user's orders
 POST /api/orders/place                       # Place order
 GET /api/orders/vendor                       # Vendor's orders
+PUT /api/orders/{orderId}/status             # Update order status (VENDOR)
+```
+
+### Review Endpoints
+```http
+GET /api/reviews/product/{productId}         # Get product reviews
+POST /api/reviews/product/{productId}        # Add review
+GET /api/reviews/can-review/{productId}      # Check if user can review
 ```
 
 ## 💻 How to Run
@@ -332,15 +340,24 @@ docker-compose up -d
 ## ⚡ Performance Optimization
 
 ### Caching Strategy
-- **Cache Provider**: Caffeine (in-memory)
+- **Cache Provider**: Redis (in-memory)
 - **Cache Configuration**:
   - TTL: 10 minutes
-  - Max Size: 1000 entries
-  - Eviction Policy: Size-based + Time-based
+  - Serialization: GenericJackson2JsonRedisSerializer
 - **Cached Operations**:
   - `@Cacheable("products")` - All products list
   - `@Cacheable("product")` - Individual product by ID
-  - `@CacheEvict` - On create/update/delete operations
+  - `@CacheEvict` - On create/update operations
+- **Note**: Cart, Wishlist, Order services have NO caching (direct DB access)
+
+### Stock Management
+- **Automatic Stock Reduction**: Stock reduces when order status changes to DELIVERED
+- **Stock Validation**: Validates stock on add to cart, update cart, and place order
+- **Out-of-Stock Handling**: 
+  - Products with stock = 0 visible with "Out of Stock" badge
+  - Add to cart disabled for out-of-stock products
+  - Checkout blocked if cart contains out-of-stock items
+- **No Product Deletion**: Products remain in database when out of stock
 
 ### Pagination
 - **Implementation**: Spring Data Pageable
@@ -369,15 +386,16 @@ docker-compose up -d
 ### Vendor (ROLE_VENDOR)
 **Permissions:**
 - All customer permissions
-- Create products with image upload
-- Edit own products
-- Delete own products
+- Create products with image upload and stock
+- Edit own products (including stock management)
 - View sales dashboard
-- View revenue statistics
+- View revenue statistics (quantity * price)
 - Manage product inventory
 - View all orders for their products
+- Update order status (PENDING/DELIVERED/CANCELLED)
 
 **Restricted:**
+- Cannot delete products (products stay in DB)
 - Cannot modify other vendors' products
 - Cannot access admin functions
 
@@ -419,19 +437,22 @@ docker-compose up -d
 - **Image Optimization**: Lazy loading and caching
 
 ### Customer Features
-- Browse products with pagination
+- Browse products with pagination (including out-of-stock with badge)
 - Add to cart with size and quantity selection
-- Wishlist management (add/remove)
+- Wishlist management (add/remove) with ratings display
 - Edit cart items (update size/quantity)
-- Order placement and tracking
+- View out-of-stock badge in cart/wishlist/orders
+- Order placement with stock validation
 - Order history with status filters
+- Product reviews and ratings
 
 ### Vendor Features
-- Product management (CRUD operations)
+- Product management (Create/Update with stock)
 - Image upload for products
+- Stock management (automatic reduction on delivery)
 - Sales dashboard with statistics
-- Order management
-- Revenue tracking
+- Order management with status updates
+- Revenue tracking (quantity * price)
 
 ## 🐛 Troubleshooting
 
@@ -445,19 +466,26 @@ docker-compose up -d
 
 ### Database Migration
 ```sql
--- Add size column to cart (if upgrading)
-ALTER TABLE cart ADD COLUMN size VARCHAR(10);
-ALTER TABLE cart DROP INDEX unique_user_product;
+-- Add stock management columns (if upgrading)
+ALTER TABLE product ADD COLUMN stock INT DEFAULT 0 NOT NULL;
+ALTER TABLE product ADD COLUMN sizes VARCHAR(255);
+ALTER TABLE product ADD COLUMN version BIGINT DEFAULT 0;
 
--- Create wishlist table (if upgrading)
-CREATE TABLE IF NOT EXISTS wishlist (
+-- Add quantity and size to orders (if upgrading)
+ALTER TABLE orders ADD COLUMN quantity INT DEFAULT 1;
+ALTER TABLE orders ADD COLUMN size VARCHAR(10);
+
+-- Create review table (if upgrading)
+CREATE TABLE IF NOT EXISTS review (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     userid BIGINT NOT NULL,
     pid BIGINT NOT NULL,
-    added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    rating INT NOT NULL CHECK (rating >= 1 AND rating <= 5),
+    comment TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (userid) REFERENCES user(userid) ON DELETE CASCADE,
     FOREIGN KEY (pid) REFERENCES product(pid) ON DELETE CASCADE,
-    UNIQUE KEY unique_user_product (userid, pid)
+    UNIQUE KEY unique_user_product_review (userid, pid)
 );
 ```
 
@@ -477,3 +505,32 @@ java -jar target/spring-ecommerce-1.0.0.jar --logging.level.com.ecommerce=DEBUG
 - **Database Queries**: Optimized with eager/lazy loading
 - **Concurrent Users**: Supports 100+ concurrent users
 - **Security**: OWASP compliant, no SQL injection vulnerabilities
+
+## 🎯 Key Features Implemented
+
+### Stock Management System
+- Automatic stock reduction on order delivery
+- Stock validation at multiple points (cart, checkout)
+- Out-of-stock products remain visible with badges
+- Products never deleted from database
+- Checkout blocked for out-of-stock items
+
+### Review & Rating System
+- 5-star rating system
+- Customer reviews with comments
+- Average rating display on products
+- Review eligibility check (must have ordered)
+- One review per customer per product
+
+### Enhanced Order Management
+- Order status tracking (PENDING/DELIVERED/CANCELLED)
+- Vendor can update order status
+- Stock automatically reduces on delivery
+- Revenue calculation: quantity * price
+- Order history with filters
+
+### Cache Optimization
+- Redis-based caching for products
+- Direct DB access for cart/wishlist/orders
+- Cache eviction on data changes
+- Fallback to DB if cache fails

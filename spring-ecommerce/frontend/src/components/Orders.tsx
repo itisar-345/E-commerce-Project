@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Package, Clock, CheckCircle, XCircle, Calendar, DollarSign, Loader2, ShoppingBag, ArrowLeft } from 'lucide-react';
+import { Package, Clock, CheckCircle, XCircle, Calendar, IndianRupee, Loader2, ShoppingBag, ArrowLeft } from 'lucide-react';
 import type { Order } from '../types/index';
 import api from '../services/api';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
@@ -191,12 +191,19 @@ const Orders: React.FC<OrdersProps> = ({ onContinueShopping }) => {
                 <CardContent className="p-4 sm:p-6">
                   <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
                     <div className="flex items-start space-x-3 sm:space-x-4 w-full">
-                      <div className="flex-shrink-0">
+                      <div className="flex-shrink-0 relative">
                         <img 
                           src={`http://localhost:8080${order.product.imgpath}`} 
                           alt={order.product.name}
                           className="w-12 h-12 sm:w-16 sm:h-16 object-cover rounded-md"
                         />
+                        {order.product.stock === 0 && (
+                          <div className="absolute -top-1 -right-1">
+                            <span className="bg-red-500 text-white text-xs px-1 py-0.5 rounded">
+                              Out of Stock
+                            </span>
+                          </div>
+                        )}
                       </div>
                       <div className="flex-1 min-w-0">
                         <h3 className="text-lg font-semibold text-foreground mb-1">
@@ -211,8 +218,8 @@ const Orders: React.FC<OrdersProps> = ({ onContinueShopping }) => {
                             <span>{new Date(order.orderDate).toLocaleDateString()}</span>
                           </div>
                           <div className="flex items-center space-x-1">
-                            <DollarSign className="h-4 w-4" />
-                            <span>₹{order.price}</span>
+                            <IndianRupee className="h-4 w-4" />
+                            <span>{order.price}</span>
                           </div>
                           {order.quantity && (
                             <div className="flex items-center space-x-1">

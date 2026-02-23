@@ -126,14 +126,4 @@ public class ProductController {
         }
     }
     
-    @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('VENDOR')")
-    public ResponseEntity<ApiResponse<String>> deleteProduct(@PathVariable Long id) {
-        try {
-            productService.deleteProduct(id);
-            return ResponseEntity.ok(ApiResponse.success("Product deleted successfully"));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
-        }
-    }
 }

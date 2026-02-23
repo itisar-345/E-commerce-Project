@@ -4,6 +4,7 @@ import com.ecommerce.entity.Product;
 import com.ecommerce.entity.User;
 import com.ecommerce.entity.Wishlist;
 import com.ecommerce.repository.ProductRepository;
+import com.ecommerce.repository.ReviewRepository;
 import com.ecommerce.repository.WishlistRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -19,8 +20,13 @@ public class WishlistService {
     @Autowired
     private ProductRepository productRepository;
     
+    @Autowired
+    private ReviewRepository reviewRepository;
+    
     public List<Wishlist> getUserWishlist(User user) {
-        return wishlistRepository.findByUser(user);
+        List<Wishlist> wishlist = wishlistRepository.findByUser(user);
+        wishlist.forEach(item -> populateRatingData(item.getProduct()));
+        return wishlist;
     }
     
     @Transactional
@@ -43,5 +49,12 @@ public class WishlistService {
     
     public boolean isInWishlist(User user, Long productId) {
         return wishlistRepository.findByUserAndProductPid(user, productId).isPresent();
+    }
+    
+    private void populateRatingData(Product product) {
+        Double avgRating = reviewRepository.getAverageRatingByProductId(product.getPid());
+        Long reviewCount = reviewRepository.getReviewCountByProductId(product.getPid());
+        product.setAverageRating(avgRating != null ? avgRating : 0.0);
+        product.setReviewCount(reviewCount != null ? reviewCount : 0L);
     }
 }

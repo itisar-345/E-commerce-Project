@@ -27,8 +27,17 @@ public class CartService {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new RuntimeException("Product not found"));
         
+        if (product.getStock() == 0) {
+            throw new RuntimeException("Product is out of stock");
+        }
+        
+        int requestedQty = quantity != null ? quantity : 1;
+        if (product.getStock() < requestedQty) {
+            throw new RuntimeException("Insufficient stock. Available: " + product.getStock());
+        }
+        
         Cart newCart = new Cart(user, product, product.getPrice());
-        newCart.setQuantity(quantity != null ? quantity : 1);
+        newCart.setQuantity(requestedQty);
         newCart.setSize(size);
         return cartRepository.save(newCart);
     }
@@ -38,6 +47,10 @@ public class CartService {
                 .orElseThrow(() -> new RuntimeException("Cart item not found"));
         
         if (quantity != null) {
+            Product product = cart.getProduct();
+            if (product.getStock() < quantity) {
+                throw new RuntimeException("Insufficient stock. Available: " + product.getStock());
+            }
             cart.setQuantity(quantity);
         }
         if (size != null) {
