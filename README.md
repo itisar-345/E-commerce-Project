@@ -13,55 +13,55 @@ A modern, full-stack e-commerce platform built with Spring Boot 3.2.0 and React 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                           CLIENT (React + TypeScript)                       │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │
-│  │   Products   │  │     Cart     │  │   Wishlist   │  │    Orders    │  │
-│  └──────────────┘  └──────────────┘  └──────────────┘  └──────────────┘  │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐     │
+│  │   Products   │  │     Cart     │  │   Wishlist   │  │    Orders    │     │
+│  └──────────────┘  └──────────────┘  └──────────────┘  └──────────────┘     │
 │                           │                  │                              │
 │                           └──────────────────┘                              │
 │                                    │                                        │
-│                              ┌─────▼─────┐                                 │
+│                              ┌─────▼─────┐                                  │
 │                              │  Checkout  │                                 │
 │                              └───────────┘                                  │
 │                                                                             │
-│                    Axios Interceptor (Auto Token Refresh)                  │
+│                    Axios Interceptor (Auto Token Refresh)                   │
 └─────────────────────────────────┬───────────────────────────────────────────┘
                                   │ HTTP/REST (JSON)
                                   │ JWT Bearer Token
                                   ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                      SPRING BOOT APPLICATION (Port 8080)                    │
-│  ┌─────────────────────────────────────────────────────────────────────┐  │
-│  │                    Security Layer (JWT Filter)                       │  │
-│  │  • Validate Access Token (15min)                                     │  │
-│  │  • Extract User Roles (CUSTOMER/VENDOR)                              │  │
-│  │  • Method-level Authorization (@PreAuthorize)                        │  │
-│  └─────────────────────────────────────────────────────────────────────┘  │
+│  ┌─────────────────────────────────────────────────────────────────────┐    │
+│  │                    Security Layer (JWT Filter)                      │    │
+│  │  • Validate Access Token (15min)                                    │    │
+│  │  • Extract User Roles (CUSTOMER/VENDOR)                             │    │
+│  │  • Method-level Authorization (@PreAuthorize)                       │    │
+│  └─────────────────────────────────────────────────────────────────────┘    │
 │                                                                             │
-│  ┌──────────────────────────────────────────────────────────────────────┐ │
-│  │                         REST Controllers                              │ │
-│  │  AuthController │ ProductController │ CartController │ OrderController│ │
-│  └──────────────────────────────────────────────────────────────────────┘ │
+│  ┌───────────────────────────────────────────────────────────────────────┐  │
+│  │                         REST Controllers                              │  │
+│  │  AuthController │ ProductController │ CartController │ OrderController│  │
+│  └───────────────────────────────────────────────────────────────────────┘  │
 │                                  │                                          │
-│  ┌──────────────────────────────────────────────────────────────────────┐ │
-│  │                          Service Layer                                │ │
-│  │  AuthService │ ProductService │ RedisCartService │ OrderService        │ │
-│  │  RedisWishlistService │ ReviewService                                 │ │
-│  └──────────────────────────────────────────────────────────────────────┘ │
+│  ┌──────────────────────────────────────────────────────────────────────┐   │
+│  │                          Service Layer                               │   │
+│  │  AuthService │ ProductService │ RedisCartService │ OrderService      │   │
+│  │  RedisWishlistService │ ReviewService                                │   │
+│  └──────────────────────────────────────────────────────────────────────┘   │
 │                    │                                │                       │
 │                    ▼                                ▼                       │
-│  ┌─────────────────────────────┐    ┌──────────────────────────────────┐ │
-│  │   JPA Repositories          │    │      Redis Operations            │ │
-│  │  • UserRepository           │    │  • RedisTemplate<String, Object> │ │
-│  │  • ProductRepository        │    │  • HashOperations (Cart)         │ │
-│  │  • CartRepository           │    │  • SetOperations (Wishlist)      │ │
-│  │  • OrderRepository          │    │  • Cache-Aside Pattern           │ │
-│  │  • ReviewRepository         │    │                                  │ │
-│  └─────────────────────────────┘    └──────────────────────────────────┘ │
+│  ┌─────────────────────────────┐    ┌──────────────────────────────────┐    │
+│  │   JPA Repositories          │    │      Redis Operations            │    │
+│  │  • UserRepository           │    │  • RedisTemplate<String, Object> │    │
+│  │  • ProductRepository        │    │  • HashOperations (Cart)         │    │
+│  │  • CartRepository           │    │  • SetOperations (Wishlist)      │    │
+│  │  • OrderRepository          │    │  • Cache-Aside Pattern           │    │
+│  │  • ReviewRepository         │    │                                  │    │
+│  └─────────────────────────────┘    └──────────────────────────────────┘    │
 └─────────────────┬───────────────────────────────┬───────────────────────────┘
                   │                               │
                   ▼                               ▼
-    ┌──────────────────────────┐    ┌──────────────────────────────┐
-    │   MySQL Database (3306)  │    │   Redis Cache (6379)         │
+    ┌──────────────────────────┐    ┌─────────────────────────────┐
+    │   MySQL Database (3306)  │    │   Redis Cache (6379)        │
     │  ┌────────────────────┐  │    │  ┌────────────────────────┐ │
     │  │ • user             │  │    │  │ • cart:{userId}        │ │
     │  │ • product          │  │    │  │   (Hash, TTL: 24h)     │ │
@@ -73,7 +73,7 @@ A modern, full-stack e-commerce platform built with Spring Boot 3.2.0 and React 
     │                          │    │  │   (TTL: 5-30min)       │ │
     │  Source of Truth         │    │  └────────────────────────┘ │
     └──────────────────────────┘    │  Performance Layer          │
-                                    └──────────────────────────────┘
+                                    └─────────────────────────────┘
 
                         Data Flow Patterns:
     ┌────────────────────────────────────────────────────────────────┐
